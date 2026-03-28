@@ -44,8 +44,9 @@ public class ServiceCategoryController {
         }
     }
 
-    @GetMapping("/category/{id}")
-    public ResponseEntity<?> getAllServiceProviderOfCategory(@PathVariable Long id) {
-        return null;
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<ServiceProvidersResponse> getProvidersByCategory(@PathVariable Long categoryId) {
+        ServiceProvidersResponse response = iServiceCategory.getAllServices(categoryId);
+        return ResponseEntity.ok(response);
     }
 }

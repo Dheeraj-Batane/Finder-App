@@ -8,4 +8,5 @@ public interface IServiceCategory {
     Response addNewService(AddServiceCategoryRequest request);
     GetAllServices getAllServiceCategories();
     public void deleteCategory(Long id) ;
+    public ServiceProvidersResponse getAllServices(Long categoryId);
 }

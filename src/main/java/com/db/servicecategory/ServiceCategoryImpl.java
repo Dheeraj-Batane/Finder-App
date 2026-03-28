@@ -3,14 +3,19 @@ package com.db.servicecategory;
 import com.db.common.Constants;
 import com.db.common.Response;
 import com.db.database.RepositoryFactory;
+import com.db.database.entities.Schedule;
 import com.db.database.entities.ServiceCategory;
+import com.db.database.entities.ServiceProvider;
 import com.db.enums.ServicesCategories;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -63,5 +68,47 @@ public class ServiceCategoryImpl implements IServiceCategory{
         // Note: If you have providers linked to this category in the provider_categories
         // join table, you may need to clear those links first or handle the DataIntegrityViolationException.
         repositoryFactory.getServiceCategoryRepository().delete(category);
+    }
+
+    @Override
+    public ServiceProvidersResponse getAllServices(Long categoryId) {
+        ServiceCategory serviceCategory = repositoryFactory.getServiceCategoryRepository().findById(categoryId).
+                orElseThrow(() -> new RuntimeException("Error: Category not found"));
+
+        // Fetch verified providers offering this category
+        List<ServiceProvider> providers = repositoryFactory.getServiceProviderRepository().findByServiceCategoriesId(categoryId);
+
+        List<ServiceProvidersList> providerResponses = new ArrayList<>();
+
+        // Map Entities to DTOs
+        for (ServiceProvider provider : providers) {
+            ServiceProvidersList dto = new ServiceProvidersList();
+            dto.setProviderId(provider.getId());
+            dto.setFirstName(provider.getUser().getFirstName());
+            dto.setLastName(provider.getUser().getLastName());
+            dto.setExperienceYears(provider.getExperienceYears());
+            dto.setHourlyRate(provider.getHourlyRate());
+            dto.setBio(provider.getBio());
+
+            // Map Schedules
+            List<Schedule> scheduleResponses = provider.getSchedules().stream().map(schedule -> {
+                Schedule sDto = new Schedule();
+                sDto.setDayOfWeek(schedule.getDayOfWeek());
+                sDto.setStartTime(schedule.getStartTime());
+                sDto.setEndTime(schedule.getEndTime());
+                return sDto;
+            }).collect(Collectors.toList());
+
+            dto.setSchedules(scheduleResponses);
+            providerResponses.add(dto);
+        }
+
+        // Wrap in the standard response format
+        ServiceProvidersResponse response = new ServiceProvidersResponse();
+        response.setResponseCode("00000000");
+        response.setResponseMessage("Success");
+        response.setData(providerResponses);
+
+        return response;
     }
 }
