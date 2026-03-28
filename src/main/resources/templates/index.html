@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Local Service Finder</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header>
+    <a href="/" class="logo">ServiceFinder</a>
+    <nav class="nav-links">
+        <a href="/categories">Categories</a>
+        <a href="/how-it-works">How it Works</a>
+        <a href="/login" class="nav-item">Login</a>
+        <a href="/signup" class="nav-item">Sign Up</a>
+        <a href="/provider-signup" class="btn-primary">Become a Professional</a>
+    </nav>
+</header>
+
+<section class="hero">
+    <h1>Trusted local professionals, right at your door.</h1>
+    <p>Book verified plumbers, electricians, cleaners, and more in seconds.</p>
+
+    <div class="search-container">
+        <input type="text" id="serviceSearch" placeholder="What service do you need? (e.g. AC Repair)">
+        <input type="text" id="locationSearch" value="Indore" placeholder="Location">
+        <button class="search-btn" id="homeSearchBtn">Search</button>
+    </div>
+</section>
+
+<section class="categories">
+    <h2>Popular Services</h2>
+    <div class="category-grid">
+
+        <div class="category-card">
+            <h3>AC & Appliance Repair</h3>
+            <p>Cooling, washing machines & more</p>
+        </div>
+
+        <div class="category-card">
+            <h3>Plumbing</h3>
+            <p>Leakages, pipe fittings & drains</p>
+        </div>
+
+        <div class="category-card">
+            <h3>Electrical</h3>
+            <p>Wiring, switchboards & failures</p>
+        </div>
+
+        <div class="category-card">
+            <h3>Home Cleaning</h3>
+            <p>Deep cleaning & sanitization</p>
+        </div>
+
+    </div>
+</section>
+
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>
