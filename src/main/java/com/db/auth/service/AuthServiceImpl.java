@@ -1,9 +1,6 @@
 package com.db.auth.service;
 
-import com.db.auth.dto.ProviderOnboardingRequest;
-import com.db.auth.dto.ScheduleRequest;
-import com.db.auth.dto.SignUpRequest;
-import com.db.auth.dto.SignUpResponse;
+import com.db.auth.dto.*;
 import com.db.common.Constants;
 import com.db.database.RepositoryFactory;
 import com.db.database.entities.*;
@@ -16,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements IAuthService{
@@ -120,5 +118,31 @@ public class AuthServiceImpl implements IAuthService{
         );
 
         return savedProvider;
+    }
+
+    @Override
+    public LoginResponse loginUser(LoginRequest request) {
+        LoginResponse response=new LoginResponse();
+        if(null==request.getEmail() || null==request.getPassword()){
+            response.setResponseCode(Constants.ERROR_CODE);
+            response.setResponseMessage("Email or password is null");
+            return response;
+        }
+        Optional<User> optionalUsers = repositoryFactory.getUserRepository().findByEmail(request.getEmail());
+        if(optionalUsers.isEmpty()){
+            response.setResponseCode(Constants.ERROR_CODE);
+            response.setResponseMessage("User does not exist with this email");
+            return response;
+        }
+        if(!passwordEncoder.matches(request.getPassword(),optionalUsers.get().getPassword())){
+            response.setResponseCode(Constants.ERROR_CODE);
+            response.setResponseMessage("Password is incorrect");
+            return response;
+        }
+        response.setResponseCode(Constants.SUCCESS_CODE);
+        response.setResponseMessage("Login Successful");
+        response.setUserId(String.valueOf(optionalUsers.get().getId()));
+        response.setUserRole(optionalUsers.get().getRole().getName());
+        return response;
     }
 }

@@ -25,5 +25,16 @@ public class HomeController {
         model.addAttribute("pageTitle", "Complete Your Profile - Local Service Finder");
         return "provider-onboarding";
     }
+    @GetMapping("/login")
+    public String loginPage(Model model) {
+        model.addAttribute("pageTitle", "Login - Local Service Finder");
+        return "login";
+    }
+
+    @GetMapping("/user-dashboard")
+    public String userDashboard(Model model) {
+        model.addAttribute("pageTitle", "User Dashboard - Local Service Finder");
+        return "user-dashboard";
+    }
 
 }

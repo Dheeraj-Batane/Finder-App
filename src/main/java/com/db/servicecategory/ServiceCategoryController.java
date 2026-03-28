@@ -15,23 +15,25 @@ import java.util.List;
 @RequestMapping("/services")
 public class ServiceCategoryController {
 
-    @Autowired private IServiceCategory iServiceCategory;
+    @Autowired
+    private IServiceCategory iServiceCategory;
 
-    @PostMapping(value = "/add",produces = MediaType.APPLICATION_JSON_VALUE,consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Response> saveNewServiceCategory(@RequestBody AddServiceCategoryRequest request){
+    @PostMapping(value = "/add", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> saveNewServiceCategory(@RequestBody AddServiceCategoryRequest request) {
         Response response = iServiceCategory.addNewService(request);
-        if(Constants.SUCCESS_CODE.equalsIgnoreCase(response.getResponseCode())){
+        if (Constants.SUCCESS_CODE.equalsIgnoreCase(response.getResponseCode())) {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }else {
+        } else {
             return ResponseEntity.status(HttpStatus.OK).body(response);
         }
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GetAllServices> getAllCategories(){
+    public ResponseEntity<GetAllServices> getAllCategories() {
         GetAllServices allServiceCategories = iServiceCategory.getAllServiceCategories();
         return ResponseEntity.status(HttpStatus.OK).body(allServiceCategories);
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
         try {
@@ -42,4 +44,8 @@ public class ServiceCategoryController {
         }
     }
 
+    @GetMapping("/category/{id}")
+    public ResponseEntity<?> getAllServiceProviderOfCategory(@PathVariable Long id) {
+        return null;
+    }
 }

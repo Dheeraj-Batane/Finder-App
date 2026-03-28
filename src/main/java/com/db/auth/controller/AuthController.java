@@ -1,12 +1,12 @@
 package com.db.auth.controller;
 
-import com.db.auth.dto.ProviderOnboardingRequest;
-import com.db.auth.dto.SignUpRequest;
-import com.db.auth.dto.SignUpResponse;
+import com.db.auth.dto.*;
 import com.db.auth.service.IAuthService;
+import com.db.common.Constants;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
@@ -44,4 +44,16 @@ public class AuthController {
             throw new RuntimeException(e);
         }
     }
+
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE,consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest request){
+        LoginResponse loginUser = authService.loginUser(request);
+        if(Constants.SUCCESS_CODE.equalsIgnoreCase(loginUser.getResponseCode())){
+        return ResponseEntity.status(HttpStatus.OK).body(loginUser);
+         }
+        else{
+        return ResponseEntity.ok(loginUser);
+         }
+    }
+
 }
