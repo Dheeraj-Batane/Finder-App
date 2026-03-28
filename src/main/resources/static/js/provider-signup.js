@@ -39,27 +39,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify(payload)
             });
+            // Parse the new JSON response format
+            const data = await response.json();
 
             // 4. Handle the Response
-            if (response.status === 201) {
-                // Success
-                messageBox.innerText = "Account created successfully! Redirecting to login...";
-                messageBox.classList.add('success-msg');
-                messageBox.style.display = 'block';
-                form.reset();
+           // Check for the custom responseCode "00000000"
+           if (response.ok && data.responseCode === "00000000") {
+                           messageBox.innerText = "Account created successfully! Redirecting to step 2...";
+                           messageBox.classList.add('success-msg');
+                           messageBox.style.display = 'block';
 
-                // Redirect to login page after 2 seconds
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
+                           // Store the userId in localStorage for the next page to use
+                           localStorage.setItem('onboardingUserId', data.userId);
 
-            } else {
-                // Backend validation error (400 Bad Request)
-                const errorText = await response.text();
-                messageBox.innerText = "Error: " + errorText;
-                messageBox.classList.add('error-msg');
-                messageBox.style.display = 'block';
-            }
+                           setTimeout(() => {
+                               window.location.href = '/provider-onboarding'; // Redirect to the new page
+                           }, 1500);
+
+           } else {
+                           // Handle backend validation or custom errors
+                           messageBox.innerText = "Error: " + (data.responseMessage || "Failed to sign up.");
+                           messageBox.classList.add('error-msg');
+                           messageBox.style.display = 'block';
+                       }
 
         } catch (error) {
             // Network or server down error

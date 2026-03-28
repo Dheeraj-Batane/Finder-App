@@ -20,5 +20,10 @@ public class HomeController {
         model.addAttribute("pageTitle", "Become a Professional - Local Service Finder");
         return "provider-signup";
     }
+    @GetMapping("/provider-onboarding")
+    public String providerOnboarding(Model model) {
+        model.addAttribute("pageTitle", "Complete Your Profile - Local Service Finder");
+        return "provider-onboarding";
+    }
 
 }

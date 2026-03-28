@@ -3,6 +3,8 @@ package com.db.auth.service;
 import com.db.auth.dto.ProviderOnboardingRequest;
 import com.db.auth.dto.ScheduleRequest;
 import com.db.auth.dto.SignUpRequest;
+import com.db.auth.dto.SignUpResponse;
+import com.db.common.Constants;
 import com.db.database.RepositoryFactory;
 import com.db.database.entities.*;
 import com.db.integration.EmailService;
@@ -21,8 +23,9 @@ public class AuthServiceImpl implements IAuthService{
     @Autowired private RepositoryFactory repositoryFactory;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private EmailService emailService;
+
     @Override
-    public void registerUser(SignUpRequest request) {
+    public SignUpResponse registerUser(SignUpRequest request) {
         if (repositoryFactory.getUserRepository().existsByEmail(request.getEmail())) {
             throw new RuntimeException("Error: Email is already in use!");
         }
@@ -51,7 +54,11 @@ public class AuthServiceImpl implements IAuthService{
         user.addAddress(newAddress);
 
         // Saving the user will cascade and save the address to the addresses table
-        repositoryFactory.getUserRepository().save(user);
+        User save = repositoryFactory.getUserRepository().save(user);
+        SignUpResponse signUpResponse=new SignUpResponse();
+        signUpResponse.setResponseCode(Constants.SUCCESS_CODE);
+        signUpResponse.setUserId(String.valueOf(save.getId()));
+        return signUpResponse;
     }
 
     @Override

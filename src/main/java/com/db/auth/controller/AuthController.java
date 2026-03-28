@@ -2,6 +2,7 @@ package com.db.auth.controller;
 
 import com.db.auth.dto.ProviderOnboardingRequest;
 import com.db.auth.dto.SignUpRequest;
+import com.db.auth.dto.SignUpResponse;
 import com.db.auth.service.IAuthService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -22,12 +23,12 @@ public class AuthController {
     private IAuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> registerUser(@RequestBody SignUpRequest signUpRequest) {
+    public ResponseEntity<SignUpResponse> registerUser(@RequestBody SignUpRequest signUpRequest) {
         try {
-            authService.registerUser(signUpRequest);
-            return new ResponseEntity<>("User registered successfully!", HttpStatus.CREATED);
+            SignUpResponse signUpResponse = authService.registerUser(signUpRequest);
+            return new ResponseEntity<>(signUpResponse, HttpStatus.CREATED);
         } catch (RuntimeException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
 
