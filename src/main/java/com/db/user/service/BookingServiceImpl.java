@@ -5,7 +5,9 @@ import com.db.database.entities.*;
 import com.db.database.entities.User;
 import com.db.database.enums.BookingStatus;
 import com.db.integration.EmailService;
+import com.db.user.dto.BookingListResponse;
 import com.db.user.dto.BookingRequest;
+import com.db.user.dto.BookingResponse;
 import com.db.user.dto.PaymentRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.List;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -163,5 +166,32 @@ public class BookingServiceImpl implements BookingService {
         emailService.sendBookingConfirmationToCustomer(
                 customerEmail, customerName, providerName, categoryName, bookingDate, bookingTime
         );
+    }
+
+    @Override
+    public BookingListResponse getUserBookings(Long userId) {
+        List<Booking> bookings = repositoryFactory.getBookingRepository().findByUserIdOrderByAppointmentDateDescAppointmentTimeDesc(userId);
+
+        List<BookingResponse> bookingResponses = bookings.stream().map(booking -> {
+            BookingResponse dto = new BookingResponse();
+            dto.setBookingId(booking.getId());
+            // Combine first and last name safely
+            String providerName = booking.getServiceProvider().getUser().getFirstName() + " " +
+                    booking.getServiceProvider().getUser().getLastName();
+            dto.setProviderName(providerName);
+            dto.setCategoryName(booking.getServiceCategory().getName());
+            dto.setAppointmentDate(booking.getAppointmentDate().toString());
+
+            // Format time to remove seconds (HH:mm)
+            dto.setAppointmentTime(booking.getAppointmentTime().toString().substring(0, 5));
+            dto.setStatus(booking.getStatus().name());
+            return dto;
+        }).toList();
+
+        BookingListResponse response = new BookingListResponse();
+        response.setResponseCode("00000000");
+        response.setResponseMessage("Success");
+        response.setData(bookingResponses);
+        return response;
     }
 }

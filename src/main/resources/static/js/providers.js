@@ -210,7 +210,7 @@ bookingForm.addEventListener('submit', async (e) => {
             // Redirect to My Bookings page after 1.5 seconds
             setTimeout(() => {
                 window.location.href = '/my-bookings';
-            }, 15000);
+            }, 1500);
 
         } else {
             // Handle error messages from backend (like "Time slot already booked")

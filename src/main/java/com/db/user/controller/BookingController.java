@@ -2,6 +2,7 @@ package com.db.user.controller;
 
 import com.db.database.entities.Booking;
 import com.db.database.entities.Payment;
+import com.db.user.dto.BookingListResponse;
 import com.db.user.dto.BookingRequest;
 import com.db.user.dto.PaymentRequest;
 import com.db.user.service.BookingService;
@@ -57,5 +58,11 @@ public class BookingController {
                     + "</body></html>";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorHtml);
         }
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<BookingListResponse> getUserBookings(@PathVariable Long userId) {
+        BookingListResponse response = bookingService.getUserBookings(userId);
+        return ResponseEntity.ok(response);
     }
 }

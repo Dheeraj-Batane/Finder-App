@@ -46,5 +46,9 @@ public class HomeController {
         model.addAttribute("pageTitle", "My Bookings - Local Service Finder");
         return "my-bookings";
     }
-
+    @GetMapping("/signup")
+    public String userSignUp(Model model) {
+        model.addAttribute("pageTitle", "Create an Account - Local Service Finder");
+        return "signup";
+    }
 }
