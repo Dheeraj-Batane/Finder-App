@@ -41,5 +41,10 @@ public class HomeController {
         model.addAttribute("pageTitle", "Available Providers - Local Service Finder");
         return "providers";
     }
+    @GetMapping("/my-bookings")
+    public String myBookings(Model model) {
+        model.addAttribute("pageTitle", "My Bookings - Local Service Finder");
+        return "my-bookings";
+    }
 
 }

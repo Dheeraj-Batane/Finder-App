@@ -120,13 +120,116 @@ function renderProviders(providers, categoryId, categoryName) {
 }
 
 // Global function to handle clicking the Book button
-window.initiateBooking = function(providerId, providerName, categoryId, categoryName) {
-    // Save selection to memory
-    localStorage.setItem('bookingProviderId', providerId);
-    localStorage.setItem('bookingProviderName', providerName);
-    localStorage.setItem('bookingCategoryId', categoryId);
-    localStorage.setItem('bookingCategoryName', categoryName);
+// --- Modal and Booking Logic ---
 
-    // Redirect to the booking form
-    window.location.href = '/book-appointment';
+// Variables to hold the selected data
+let selectedProviderId = null;
+let selectedCategoryId = null;
+
+const modal = document.getElementById('bookingModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const bookingForm = document.getElementById('bookingForm');
+const bookingMessageBox = document.getElementById('bookingMessageBox');
+const confirmBookingBtn = document.getElementById('confirmBookingBtn');
+
+// 1. Function called when clicking a "Book Appointment" button on a card
+window.initiateBooking = function(providerId, providerName, categoryId, categoryName) {
+    selectedProviderId = providerId;
+    selectedCategoryId = categoryId;
+
+    // Update modal text
+    document.getElementById('modalTitle').innerText = `Book ${providerName}`;
+    document.getElementById('modalSubtitle').innerText = `Service: ${categoryName}`;
+
+    // Prevent booking in the past by setting the 'min' attribute to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('appointmentDate').setAttribute('min', today);
+
+    // Reset form and messages
+    bookingForm.reset();
+    bookingMessageBox.style.display = 'none';
+
+    // Show the modal
+    modal.style.display = 'flex';
 };
+
+// 2. Close modal when clicking the 'X' or clicking outside the box
+closeModalBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+// 3. Handle the actual booking submission
+bookingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+        alert("Session expired. Please log in again.");
+        window.location.href = '/login';
+        return;
+    }
+
+    // HTML time input returns "HH:mm". We append ":00" to match your backend's LocalTime format
+    const timeValue = document.getElementById('appointmentTime').value + ":00";
+    const dateValue = document.getElementById('appointmentDate').value;
+
+    const payload = {
+        userId: parseInt(userId),
+        providerId: selectedProviderId,
+        categoryId: parseInt(selectedCategoryId),
+        appointmentDate: dateValue,
+        appointmentTime: timeValue
+    };
+
+    confirmBookingBtn.innerText = "Processing...";
+    confirmBookingBtn.disabled = true;
+    bookingMessageBox.style.display = 'none';
+    bookingMessageBox.className = '';
+
+    try {
+        const response = await fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        // Your backend returns 201 CREATED for success
+        if (response.status === 201) {
+            bookingMessageBox.innerText = "Booking Confirmed! Redirecting...";
+            bookingMessageBox.style.backgroundColor = '#d4edda';
+            bookingMessageBox.style.color = '#155724';
+            bookingMessageBox.style.border = '1px solid #c3e6cb';
+            bookingMessageBox.style.display = 'block';
+
+            // Redirect to My Bookings page after 1.5 seconds
+            setTimeout(() => {
+                window.location.href = '/my-bookings';
+            }, 15000);
+
+        } else {
+            // Handle error messages from backend (like "Time slot already booked")
+            const errorText = await response.text();
+            bookingMessageBox.innerText = "Error: " + errorText;
+            bookingMessageBox.style.backgroundColor = '#f8d7da';
+            bookingMessageBox.style.color = '#721c24';
+            bookingMessageBox.style.border = '1px solid #f5c6cb';
+            bookingMessageBox.style.display = 'block';
+        }
+
+    } catch (error) {
+        console.error("Booking error:", error);
+        bookingMessageBox.innerText = "Network error. Please try again.";
+        bookingMessageBox.style.backgroundColor = '#f8d7da';
+        bookingMessageBox.style.color = '#721c24';
+        bookingMessageBox.style.display = 'block';
+    } finally {
+        confirmBookingBtn.innerText = "Confirm Booking";
+        confirmBookingBtn.disabled = false;
+    }
+});

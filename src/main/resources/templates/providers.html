@@ -35,6 +35,29 @@
 
         .empty-state { text-align: center; padding: 50px; color: #888; grid-column: 1 / -1; font-size: 1.2rem;}
         #loadingMsg { text-align: center; font-size: 1.2rem; color: #555; padding: 50px; }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: white; padding: 30px; border-radius: 10px;
+            width: 90%; max-width: 450px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative; animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .close-modal {
+            position: absolute; top: 15px; right: 20px; font-size: 1.5rem;
+            cursor: pointer; color: #888; font-weight: bold;
+        }
+        .close-modal:hover { color: #333; }
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column;}
+        .form-group label { margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;}
+        .form-group input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem;}
+        #bookingMessageBox { margin-top: 15px; padding: 10px; border-radius: 5px; display: none; font-size: 0.9rem; text-align: center;}
     </style>
 </head>
 <body>
@@ -55,6 +78,28 @@
 <div class="content-container">
     <div id="loadingMsg">Finding the best professionals for you...</div>
     <div class="providers-grid" id="providersGrid" style="display: none;">
+    </div>
+</div>
+<div id="bookingModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" id="closeModalBtn">&times;</span>
+        <h2 id="modalTitle" style="color: var(--primary-color); margin-bottom: 5px;">Book Appointment</h2>
+        <p id="modalSubtitle" style="color: #666; margin-bottom: 20px; font-size: 0.95rem;"></p>
+
+        <form id="bookingForm">
+            <div class="form-group">
+                <label for="appointmentDate">Select Date</label>
+                <input type="date" id="appointmentDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="appointmentTime">Select Time</label>
+                <input type="time" id="appointmentTime" required>
+            </div>
+
+            <button type="submit" class="search-btn" style="width: 100%; margin-top: 10px;" id="confirmBookingBtn">Confirm Booking</button>
+        </form>
+        <div id="bookingMessageBox"></div>
     </div>
 </div>
 
