@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Available Providers</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .page-header { background: var(--primary-color); color: white; padding: 30px 5%; display: flex; align-items: center; gap: 20px;}
+        .back-btn { background: white; color: var(--primary-color); text-decoration: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; font-size: 0.9rem;}
+
+        .content-container { padding: 40px 5%; max-width: 1200px; margin: 0 auto; }
+
+        .providers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
+
+        .provider-card {
+            background: white; border-radius: 10px; padding: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #eee;
+            display: flex; flex-direction: column;
+        }
+
+        .provider-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px;}
+        .provider-name { font-size: 1.4rem; color: var(--primary-color); font-weight: bold; margin-bottom: 5px;}
+        .provider-stats { font-size: 0.9rem; color: #555; }
+        .rate-badge { background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;}
+
+        .provider-bio { color: #444; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; flex-grow: 1;}
+
+        .schedule-box { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;}
+        .schedule-title { font-size: 0.9rem; font-weight: bold; color: #333; margin-bottom: 10px;}
+        .schedule-list { list-style: none; font-size: 0.85rem; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;}
+
+        .book-btn { background: var(--secondary-color); color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem;}
+        .book-btn:hover { background: #3d8b40; }
+
+        .empty-state { text-align: center; padding: 50px; color: #888; grid-column: 1 / -1; font-size: 1.2rem;}
+        #loadingMsg { text-align: center; font-size: 1.2rem; color: #555; padding: 50px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="/user-dashboard" class="logo">ServiceFinder</a>
+    <nav class="nav-links">
+        <a href="/user-dashboard">Dashboard</a>
+        <a href="#" id="logoutBtn" class="btn-primary" style="background-color: #dc3545;">Logout</a>
+    </nav>
+</header>
+
+<div class="page-header">
+    <a href="/user-dashboard" class="back-btn">&larr; Back</a>
+    <h1 id="pageTitleHeader">Available Professionals</h1>
+</div>
+
+<div class="content-container">
+    <div id="loadingMsg">Finding the best professionals for you...</div>
+    <div class="providers-grid" id="providersGrid" style="display: none;">
+    </div>
+</div>
+
+<script th:src="@{/js/providers.js}"></script>
+</body>
+</html>

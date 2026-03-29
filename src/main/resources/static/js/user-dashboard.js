@@ -37,17 +37,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             // Add click listener to fetch providers for this specific category
-            card.addEventListener('click', () => {
-                const catId = card.getAttribute('data-category-id');
-                const catName = category.name;
 
-                // For now, we just log it.
-                // Next step: You will likely redirect to a new page or open a modal to show providers.
-                console.log(`User clicked to view providers for Category ID: ${catId} (${catName})`);
+                       card.addEventListener('click', () => {
+                           const catId = card.getAttribute('data-category-id');
+                           const catName = category.name;
 
-                // Example of next step redirect:
-                // window.location.href = `/providers?categoryId=${catId}`;
-            });
+                           // Redirect to the providers list page with URL parameters
+                           window.location.href = `/providers?categoryId=${catId}`;
+                       });
 
             servicesGrid.appendChild(card);
         });

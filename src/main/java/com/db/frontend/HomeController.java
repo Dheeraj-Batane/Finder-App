@@ -36,5 +36,10 @@ public class HomeController {
         model.addAttribute("pageTitle", "User Dashboard - Local Service Finder");
         return "user-dashboard";
     }
+    @GetMapping("/providers")
+    public String providersList(Model model) {
+        model.addAttribute("pageTitle", "Available Providers - Local Service Finder");
+        return "providers";
+    }
 
 }
