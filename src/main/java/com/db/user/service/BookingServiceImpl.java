@@ -1,14 +1,12 @@
 package com.db.user.service;
 
+import com.db.common.Response;
 import com.db.database.RepositoryFactory;
 import com.db.database.entities.*;
 import com.db.database.entities.User;
 import com.db.database.enums.BookingStatus;
 import com.db.integration.EmailService;
-import com.db.user.dto.BookingListResponse;
-import com.db.user.dto.BookingRequest;
-import com.db.user.dto.BookingResponse;
-import com.db.user.dto.PaymentRequest;
+import com.db.user.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -185,6 +183,11 @@ public class BookingServiceImpl implements BookingService {
             // Format time to remove seconds (HH:mm)
             dto.setAppointmentTime(booking.getAppointmentTime().toString().substring(0, 5));
             dto.setStatus(booking.getStatus().name());
+
+            repositoryFactory.getReviewsRepository().findByBookingId(booking.getId()).ifPresent(review -> {
+                dto.setReviewStars(review.getStars());
+                dto.setReviewComments(review.getComments());
+            });
             return dto;
         }).toList();
 
@@ -192,6 +195,39 @@ public class BookingServiceImpl implements BookingService {
         response.setResponseCode("00000000");
         response.setResponseMessage("Success");
         response.setData(bookingResponses);
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public Response addReview(ReviewRequest request) {
+        // 1. Fetch the booking
+        Booking booking = repositoryFactory.getBookingRepository().findById(request.getBookingId())
+                .orElseThrow(() -> new RuntimeException("Booking not found."));
+
+        // 2. Validate booking status (Must be completed to review)
+        if (booking.getStatus() != BookingStatus.COMPLETED) {
+            throw new RuntimeException("You can only review completed services.");
+        }
+
+        // 3. Prevent duplicate reviews
+        if (repositoryFactory.getReviewsRepository().existsByBookingId(booking.getId())) {
+            throw new RuntimeException("You have already submitted a review for this booking.");
+        }
+
+        // 4. Save the review
+        Reviews review = new Reviews();
+        review.setBooking(booking);
+        review.setStars(request.getStars());
+        review.setComments(request.getComments());
+        // For now, we leave photos null as handling file uploads requires AWS S3 or local file storage logic
+        review.setPhotos(null);
+
+        repositoryFactory.getReviewsRepository().save(review);
+
+        Response response = new Response();
+        response.setResponseCode("00000000");
+        response.setResponseMessage("Review submitted successfully.");
         return response;
     }
 }

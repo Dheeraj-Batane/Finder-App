@@ -46,21 +46,38 @@ function renderBookings(bookings) {
     bookingsGrid.innerHTML = '';
 
     bookings.forEach(booking => {
-
-        // Format the date nicely (e.g., "2026-03-27" -> "Mar 27, 2026")
+        // Format the date and time
         const dateObj = new Date(booking.appointmentDate);
-        const formattedDate = dateObj.toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric'
-        });
+        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-        // Convert 24h time to 12h format (e.g., "14:00" -> "2:00 PM")
         const timeParts = booking.appointmentTime.split(':');
         let hours = parseInt(timeParts[0]);
         const minutes = timeParts[1];
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours ? hours : 12;
         const formattedTime = `${hours}:${minutes} ${ampm}`;
+
+        // --- NEW: Review Display Logic ---
+        let reviewSectionHtml = '';
+
+        if (booking.status === 'COMPLETED') {
+            if (booking.reviewStars) {
+                // User has already reviewed this booking. Generate static stars.
+                const filledStars = '★'.repeat(booking.reviewStars);
+                const emptyStars = '☆'.repeat(5 - booking.reviewStars);
+
+                reviewSectionHtml = `
+                    <div class="submitted-review">
+                        <div class="static-stars">${filledStars}${emptyStars}</div>
+                        <div class="review-text">"${booking.reviewComments}"</div>
+                    </div>
+                `;
+            } else {
+                // Booking is completed, but no review exists yet. Show the button.
+                reviewSectionHtml = `<button onclick="openReviewModal(${booking.bookingId}, '${booking.providerName}')" style="background: #ffc107; color: #333; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; width: 100%;">Leave a Review</button>`;
+            }
+        }
 
         const card = document.createElement('div');
         card.className = 'booking-card';
@@ -74,7 +91,8 @@ function renderBookings(bookings) {
                     <div>📅 <span>${formattedDate}</span></div>
                     <div>⏰ <span>${formattedTime}</span></div>
                 </div>
-            </div>
+
+                ${reviewSectionHtml} </div>
 
             <div class="status-badge status-${booking.status}">
                 ${booking.status}
@@ -84,3 +102,76 @@ function renderBookings(bookings) {
         bookingsGrid.appendChild(card);
     });
 }
+
+// --- Review Modal Logic ---
+const reviewModal = document.getElementById('reviewModal');
+const closeReviewModalBtn = document.getElementById('closeReviewModalBtn');
+const reviewForm = document.getElementById('reviewForm');
+const reviewMessageBox = document.getElementById('reviewMessageBox');
+const submitReviewBtn = document.getElementById('submitReviewBtn');
+
+window.openReviewModal = function(bookingId, providerName) {
+    document.getElementById('reviewBookingId').value = bookingId;
+    document.getElementById('reviewProviderName').innerText = `Rate your experience with ${providerName}`;
+    reviewForm.reset();
+    reviewMessageBox.style.display = 'none';
+    reviewModal.style.display = 'flex';
+};
+
+closeReviewModalBtn.addEventListener('click', () => { reviewModal.style.display = 'none'; });
+window.addEventListener('click', (event) => { if (event.target === reviewModal) reviewModal.style.display = 'none'; });
+
+reviewForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Get selected star rating
+    const selectedStar = document.querySelector('input[name="stars"]:checked');
+    if (!selectedStar) {
+        alert("Please select a star rating.");
+        return;
+    }
+
+    const payload = {
+        bookingId: parseInt(document.getElementById('reviewBookingId').value),
+        stars: parseInt(selectedStar.value),
+        comments: document.getElementById('reviewComments').value
+    };
+
+    submitReviewBtn.innerText = "Submitting...";
+    submitReviewBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/bookings/review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.status === 201) {
+            reviewMessageBox.innerText = "Review submitted successfully!";
+            reviewMessageBox.style.backgroundColor = '#d4edda';
+            reviewMessageBox.style.color = '#155724';
+            reviewMessageBox.style.border = '1px solid #c3e6cb';
+            reviewMessageBox.style.display = 'block';
+
+            // Reload page to reflect changes
+            setTimeout(() => { window.location.reload(); }, 1500);
+        } else {
+            reviewMessageBox.innerText = "Error: " + (data.responseMessage || "Could not submit review.");
+            reviewMessageBox.style.backgroundColor = '#f8d7da';
+            reviewMessageBox.style.color = '#721c24';
+            reviewMessageBox.style.border = '1px solid #f5c6cb';
+            reviewMessageBox.style.display = 'block';
+        }
+    } catch (error) {
+        reviewMessageBox.innerText = "Network error. Please try again.";
+        reviewMessageBox.style.backgroundColor = '#f8d7da';
+        reviewMessageBox.style.color = '#721c24';
+        reviewMessageBox.style.display = 'block';
+    } finally {
+        submitReviewBtn.innerText = "Submit Review";
+        submitReviewBtn.disabled = false;
+    }
+});

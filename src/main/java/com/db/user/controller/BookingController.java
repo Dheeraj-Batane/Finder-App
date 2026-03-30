@@ -1,10 +1,12 @@
 package com.db.user.controller;
 
+import com.db.common.Response;
 import com.db.database.entities.Booking;
 import com.db.database.entities.Payment;
 import com.db.user.dto.BookingListResponse;
 import com.db.user.dto.BookingRequest;
 import com.db.user.dto.PaymentRequest;
+import com.db.user.dto.ReviewRequest;
 import com.db.user.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,5 +66,18 @@ public class BookingController {
     public ResponseEntity<BookingListResponse> getUserBookings(@PathVariable Long userId) {
         BookingListResponse response = bookingService.getUserBookings(userId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/review")
+    public ResponseEntity<Response> addReview(@Valid @RequestBody ReviewRequest request) {
+        try {
+            Response response = bookingService.addReview(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            Response errorResponse = new Response();
+            errorResponse.setResponseCode("99999999");
+            errorResponse.setResponseMessage(e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 }

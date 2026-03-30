@@ -12,4 +12,6 @@ public class BookingResponse {
     private String appointmentDate;
     private String appointmentTime;
     private String status; // PENDING, CONFIRMED, COMPLETED, CANCELLED
+    private Integer reviewStars;
+    private String reviewComments;
 }
