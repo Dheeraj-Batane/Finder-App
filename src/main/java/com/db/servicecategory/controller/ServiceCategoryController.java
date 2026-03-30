@@ -1,15 +1,16 @@
-package com.db.servicecategory;
+package com.db.servicecategory.controller;
 
 import com.db.common.Constants;
 import com.db.common.Response;
-import lombok.Getter;
+import com.db.servicecategory.dto.AddServiceCategoryRequest;
+import com.db.servicecategory.dto.GetAllServices;
+import com.db.servicecategory.service.IServiceCategory;
+import com.db.servicecategory.dto.ServiceProvidersResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/services")

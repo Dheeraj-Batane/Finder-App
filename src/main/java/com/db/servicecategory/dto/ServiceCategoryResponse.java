@@ -1,11 +1,12 @@
-package com.db.servicecategory;
+package com.db.servicecategory.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class AddServiceCategoryRequest {
+public class ServiceCategoryResponse  {
+    private String id;
     private String name;
     private String description;
 }

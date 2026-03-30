@@ -1,4 +1,4 @@
-package com.db.servicecategory;
+package com.db.servicecategory.dto;
 
 import com.db.common.Response;
 import lombok.Getter;

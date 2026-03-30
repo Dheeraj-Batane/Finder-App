@@ -1,25 +1,24 @@
-package com.db.servicecategory;
+package com.db.servicecategory.service;
 
 import com.db.common.Constants;
 import com.db.common.Response;
 import com.db.database.RepositoryFactory;
+import com.db.database.entities.Reviews;
 import com.db.database.entities.Schedule;
 import com.db.database.entities.ServiceCategory;
 import com.db.database.entities.ServiceProvider;
-import com.db.enums.ServicesCategories;
+import com.db.servicecategory.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class ServiceCategoryImpl implements IServiceCategory{
+public class ServiceCategoryImpl implements IServiceCategory {
     @Autowired
     private RepositoryFactory repositoryFactory;
 
@@ -100,6 +99,25 @@ public class ServiceCategoryImpl implements IServiceCategory{
             }).collect(Collectors.toList());
 
             dto.setSchedules(scheduleResponses);
+
+            List<Reviews> reviews = repositoryFactory.getReviewsRepository().findByBookingServiceProviderIdOrderByCreateDateDesc(provider.getId());
+            List<ProviderReviewResponse> reviewDtos = reviews.stream().map(review -> {
+                ProviderReviewResponse rDto = new ProviderReviewResponse();
+                rDto.setStars(review.getStars());
+                rDto.setComments(review.getComments());
+                rDto.setReviewerName(review.getBooking().getUser().getFirstName()); // Just first name for privacy
+
+                // Format the date
+                if (review.getCreateDate() != null) {
+                    rDto.setDate(review.getCreateDate().toLocalDate().toString());
+                } else {
+                    rDto.setDate("Recent");
+                }
+                return rDto;
+            }).collect(Collectors.toList());
+
+            dto.setReviews(reviewDtos);
+
             providerResponses.add(dto);
         }
 

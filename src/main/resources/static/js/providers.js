@@ -8,38 +8,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Extract ONLY the categoryId from URL Parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const categoryId = urlParams.get('categoryId');
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('categoryId');
 
-        if (!categoryId) {
-            alert("No service category selected.");
-            window.location.href = '/user-dashboard';
-            return;
+    if (!categoryId) {
+        alert("No service category selected.");
+        window.location.href = '/user-dashboard';
+        return;
+    }
+
+    // Fetch the category name from Local Storage
+    const storedCategories = localStorage.getItem('categories');
+    let categoryName = "Selected Service"; // Default fallback name
+
+    if (storedCategories) {
+        const categories = JSON.parse(storedCategories);
+        // Use '==' instead of '===' in case the URL param is a string but stored ID is a number
+        const foundCategory = categories.find(cat => cat.id == categoryId);
+
+        if (foundCategory) {
+            categoryName = foundCategory.name;
         }
+    }
 
-        // Fetch the category name from Local Storage
-        const storedCategories = localStorage.getItem('categories');
-        let categoryName = "Selected Service"; // Default fallback name
-
-        if (storedCategories) {
-            const categories = JSON.parse(storedCategories);
-            // Use '==' instead of '===' in case the URL param is a string but stored ID is a number
-            const foundCategory = categories.find(cat => cat.id == categoryId);
-
-            if (foundCategory) {
-                categoryName = foundCategory.name;
-            }
-        }
-
-        // Update the Header Title
-        document.getElementById('pageTitleHeader').innerText = `Top Rated Professionals for ${categoryName}`;
+    // Update the Header Title
+    document.getElementById('pageTitleHeader').innerText = `Top Rated Professionals for ${categoryName}`;
     const loadingMsg = document.getElementById('loadingMsg');
     const providersGrid = document.getElementById('providersGrid');
 
     try {
         // Fetch Providers from API
-        // Note: Make sure your backend mapping is updated to match this path
-        const response = await fetch(`/services/category/${categoryId}`);
+        const response = await fetch(`/services/category/${categoryId}`); // Adjusted to match your previous backend mapping
         const data = await response.json();
 
         loadingMsg.style.display = 'none';
@@ -88,6 +87,50 @@ function renderProviders(providers, categoryId, categoryName) {
             scheduleHtml = `<li>Schedule not provided</li>`;
         }
 
+        // Review HTML Generation
+        let reviewHtml = '';
+        if (provider.reviews && provider.reviews.length > 0) {
+            let slidesHtml = '';
+
+            provider.reviews.forEach((review, index) => {
+                const filledStars = '★'.repeat(review.stars);
+                const emptyStars = '☆'.repeat(5 - review.stars);
+                // Only the first review gets the 'active' class initially
+                const activeClass = index === 0 ? 'active' : '';
+
+                slidesHtml += `
+                    <div class="review-slide ${activeClass}" data-index="${index}">
+                        <div class="review-header">
+                            <span class="review-stars">${filledStars}${emptyStars}</span>
+                            <span class="reviewer-info">- ${review.reviewerName} on ${review.date}</span>
+                        </div>
+                        <div class="review-comment">"${review.comments}"</div>
+                    </div>
+                `;
+            });
+
+            // If there's more than one review, show the navigation arrows
+            let controlsHtml = '';
+            if (provider.reviews.length > 1) {
+                controlsHtml = `
+                    <div class="carousel-controls">
+                        <button class="carousel-btn" onclick="changeReview(${provider.providerId}, -1)">&#10094; Prev</button>
+                        <span style="font-size: 0.8rem; color: #888; align-self: center;">${provider.reviews.length} Reviews</span>
+                        <button class="carousel-btn" onclick="changeReview(${provider.providerId}, 1)">Next &#10095;</button>
+                    </div>
+                `;
+            }
+
+            reviewHtml = `
+                <div class="review-carousel" id="carousel-${provider.providerId}">
+                    ${slidesHtml}
+                    ${controlsHtml}
+                </div>
+            `;
+        } else {
+            reviewHtml = `<div class="review-carousel"><div class="reviewer-info" style="text-align: center;">No reviews yet. Be the first to book!</div></div>`;
+        }
+
         const card = document.createElement('div');
         card.className = 'provider-card';
         card.innerHTML = `
@@ -102,6 +145,8 @@ function renderProviders(providers, categoryId, categoryName) {
             <div class="provider-bio">
                 ${provider.bio}
             </div>
+
+            ${reviewHtml}
 
             <div class="schedule-box">
                 <div class="schedule-title">Availability:</div>
@@ -119,7 +164,6 @@ function renderProviders(providers, categoryId, categoryName) {
     });
 }
 
-// Global function to handle clicking the Book button
 // --- Modal and Booking Logic ---
 
 // Variables to hold the selected data
@@ -233,3 +277,28 @@ bookingForm.addEventListener('submit', async (e) => {
         confirmBookingBtn.disabled = false;
     }
 });
+
+// Global function to handle clicking the Prev/Next review buttons
+window.changeReview = function(providerId, direction) {
+    const carousel = document.getElementById(`carousel-${providerId}`);
+    if (!carousel) return; // safety check
+
+    const slides = carousel.querySelectorAll('.review-slide');
+
+    // Find the currently active slide
+    let currentIndex = 0;
+    slides.forEach((slide, index) => {
+        if (slide.classList.contains('active')) {
+            currentIndex = index;
+            slide.classList.remove('active'); // Hide current
+        }
+    });
+
+    // Calculate new index (looping around if necessary)
+    let newIndex = currentIndex + direction;
+    if (newIndex < 0) newIndex = slides.length - 1;
+    if (newIndex >= slides.length) newIndex = 0;
+
+    // Show the new slide
+    slides[newIndex].classList.add('active');
+};

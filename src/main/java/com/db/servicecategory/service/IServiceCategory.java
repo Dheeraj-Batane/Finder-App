@@ -1,8 +1,9 @@
-package com.db.servicecategory;
+package com.db.servicecategory.service;
 
 import com.db.common.Response;
-
-import java.util.List;
+import com.db.servicecategory.dto.AddServiceCategoryRequest;
+import com.db.servicecategory.dto.GetAllServices;
+import com.db.servicecategory.dto.ServiceProvidersResponse;
 
 public interface IServiceCategory {
     Response addNewService(AddServiceCategoryRequest request);
