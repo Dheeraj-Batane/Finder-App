@@ -41,6 +41,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
+// Initialize Stripe right after DOMContentLoaded
+const stripe = Stripe('pk_test_51TH1UE87UBGWIccetnISQbrTfAEWG0JdTIaaRqydG1ERezd6MHHCcp793fdfVOxSzm8IzcmMxRQHNHmjjYad98mk00Kp3tXBaa');
+let elements;
+let cardElement;
+let currentClientSecret = null;
+
 function renderBookings(bookings) {
     const bookingsGrid = document.getElementById('bookingsGrid');
     bookingsGrid.innerHTML = '';
@@ -61,23 +67,25 @@ function renderBookings(bookings) {
         // --- NEW: Review Display Logic ---
         let reviewSectionHtml = '';
 
-        if (booking.status === 'COMPLETED') {
-            if (booking.reviewStars) {
-                // User has already reviewed this booking. Generate static stars.
-                const filledStars = '★'.repeat(booking.reviewStars);
-                const emptyStars = '☆'.repeat(5 - booking.reviewStars);
+                if (booking.status === 'CONFIRMED') {
+                    // Show Pay Now button
+                    actionSectionHtml = `<button onclick="openPaymentModal(${booking.bookingId}, '${booking.providerName}')" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; width: 100%;">💳 Pay Now</button>`;
+                } else if (booking.status === 'COMPLETED') {
+                    if (booking.reviewStars) {
+                        // Show existing review
+                        const filledStars = '★'.repeat(booking.reviewStars);
+                        const emptyStars = '☆'.repeat(5 - booking.reviewStars);
+                        actionSectionHtml = `
+                            <div class="submitted-review">
+                                <div class="static-stars">${filledStars}${emptyStars}</div>
+                                <div class="review-text">"${booking.reviewComments}"</div>
+                            </div>`;
+                    } else {
+                        // Show Leave Review button
+                        actionSectionHtml = `<button onclick="openReviewModal(${booking.bookingId}, '${booking.providerName}')" style="background: #ffc107; color: #333; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; width: 100%;">Leave a Review</button>`;
+                    }
+                }
 
-                reviewSectionHtml = `
-                    <div class="submitted-review">
-                        <div class="static-stars">${filledStars}${emptyStars}</div>
-                        <div class="review-text">"${booking.reviewComments}"</div>
-                    </div>
-                `;
-            } else {
-                // Booking is completed, but no review exists yet. Show the button.
-                reviewSectionHtml = `<button onclick="openReviewModal(${booking.bookingId}, '${booking.providerName}')" style="background: #ffc107; color: #333; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; width: 100%;">Leave a Review</button>`;
-            }
-        }
 
         const card = document.createElement('div');
         card.className = 'booking-card';
@@ -92,7 +100,7 @@ function renderBookings(bookings) {
                     <div>⏰ <span>${formattedTime}</span></div>
                 </div>
 
-                ${reviewSectionHtml} </div>
+                ${actionSectionHtml} </div>
 
             <div class="status-badge status-${booking.status}">
                 ${booking.status}
@@ -173,5 +181,110 @@ reviewForm.addEventListener('submit', async (e) => {
     } finally {
         submitReviewBtn.innerText = "Submit Review";
         submitReviewBtn.disabled = false;
+    }
+});
+
+
+// --- Payment Modal Logic ---
+const paymentModal = document.getElementById('paymentModal');
+const closePaymentModalBtn = document.getElementById('closePaymentModalBtn');
+const paymentForm = document.getElementById('paymentForm');
+const submitPaymentBtn = document.getElementById('submitPaymentBtn');
+const paymentMessageBox = document.getElementById('paymentMessageBox');
+const cardErrors = document.getElementById('card-errors');
+
+window.openPaymentModal = async function(bookingId, providerName) {
+    document.getElementById('paymentBookingId').value = bookingId;
+    document.getElementById('paymentProviderName').innerText = `Payment for services by ${providerName}`;
+
+    paymentMessageBox.style.display = 'none';
+    cardErrors.textContent = '';
+    submitPaymentBtn.disabled = true;
+    submitPaymentBtn.innerText = "Loading Secure Checkout...";
+    paymentModal.style.display = 'flex';
+
+    try {
+        // 1. Ask backend to create a Payment Intent
+        const response = await fetch('/api/payments/create-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bookingId: bookingId })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.responseCode === "00000000") {
+            currentClientSecret = data.clientSecret;
+
+            // 2. Setup Stripe Elements
+            elements = stripe.elements();
+
+            // Unmount old card element if it exists
+            if (cardElement) { cardElement.unmount(); }
+
+            cardElement = elements.create('card', {
+                style: { base: { fontSize: '16px', color: '#32325d', fontFamily: 'Arial, sans-serif' } }
+            });
+            cardElement.mount('#card-element');
+
+            // Listen for typing errors to display to user
+            cardElement.on('change', function(event) {
+                if (event.error) { cardErrors.textContent = event.error.message; }
+                else { cardErrors.textContent = ''; }
+            });
+
+            submitPaymentBtn.disabled = false;
+            submitPaymentBtn.innerText = "Pay Securely";
+        } else {
+            cardErrors.textContent = "Could not initialize payment: " + data.responseMessage;
+        }
+    } catch (error) {
+        cardErrors.textContent = "Network error. Please close and try again.";
+    }
+};
+
+closePaymentModalBtn.addEventListener('click', () => { paymentModal.style.display = 'none'; });
+
+// Handle Form Submission
+paymentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!currentClientSecret) return;
+
+    submitPaymentBtn.disabled = true;
+    submitPaymentBtn.innerText = "Processing Payment...";
+
+    // 3. Confirm Card Payment directly with Stripe
+    const { paymentIntent, error } = await stripe.confirmCardPayment(currentClientSecret, {
+        payment_method: { card: cardElement }
+    });
+
+    if (error) {
+        // Stripe declined the card or there was an issue
+        cardErrors.textContent = error.message;
+        submitPaymentBtn.disabled = false;
+        submitPaymentBtn.innerText = "Pay Securely";
+    } else if (paymentIntent.status === 'succeeded') {
+        // 4. Payment was successful! Tell the backend to complete the booking.
+        const bookingId = document.getElementById('paymentBookingId').value;
+
+        try {
+            const updateRes = await fetch(`/api/bookings/${bookingId}/complete`, { method: 'PUT' });
+
+            if (updateRes.ok) {
+                paymentMessageBox.innerText = "Payment Successful! Booking Completed.";
+                paymentMessageBox.style.backgroundColor = '#d4edda';
+                paymentMessageBox.style.color = '#155724';
+                paymentMessageBox.style.display = 'block';
+
+                // Reload page after 2 seconds to show the "Leave Review" button
+                setTimeout(() => { window.location.reload(); }, 2000);
+            }
+        } catch (err) {
+            paymentMessageBox.innerText = "Payment went through, but failed to update dashboard. Please contact support.";
+            paymentMessageBox.style.backgroundColor = '#fff3cd';
+            paymentMessageBox.style.color = '#856404';
+            paymentMessageBox.style.display = 'block';
+        }
     }
 });

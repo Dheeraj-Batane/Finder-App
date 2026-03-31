@@ -64,6 +64,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setBooking(booking);
             payment.setCreateDate(LocalDateTime.now());
             payment.setTxNumber(paymentIntent.getClientSecret());
+            payment.setAmount(hourlyRate);
             repositoryFactory.getPaymentRepository().save(payment);
             // 5. Build our success response containing the secret key
             PaymentResponse response = new PaymentResponse();
