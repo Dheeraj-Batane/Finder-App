@@ -14,4 +14,5 @@ public interface BookingService {
     public void confirmBooking(Long bookingId);
     public BookingListResponse getUserBookings(Long userId);
     public Response addReview(ReviewRequest request);
+    public void completeBooking(Long bookingId);
 }

@@ -80,4 +80,20 @@ public class BookingController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
+
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<Response> completeBooking(@PathVariable Long id) {
+        try {
+            bookingService.completeBooking(id);
+            Response response = new Response();
+            response.setResponseCode("00000000");
+            response.setResponseMessage("Booking marked as completed.");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Response errorResponse = new Response();
+            errorResponse.setResponseCode("99999999");
+            errorResponse.setResponseMessage(e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
 }

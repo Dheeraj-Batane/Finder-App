@@ -230,4 +230,17 @@ public class BookingServiceImpl implements BookingService {
         response.setResponseMessage("Review submitted successfully.");
         return response;
     }
+
+    @Transactional
+    public void completeBooking(Long bookingId) {
+        Booking booking = repositoryFactory.getBookingRepository().findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found."));
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new RuntimeException("Only confirmed bookings can be completed/paid.");
+        }
+
+        booking.setStatus(BookingStatus.COMPLETED);
+        repositoryFactory.getBookingRepository().save(booking);
+    }
 }
